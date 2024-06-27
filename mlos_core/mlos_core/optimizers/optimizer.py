@@ -24,6 +24,7 @@ class BaseOptimizer(metaclass=ABCMeta):
     Optimizer abstract base class defining the basic interface.
     """
 
+<<<<<<< HEAD
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
@@ -31,6 +32,13 @@ class BaseOptimizer(metaclass=ABCMeta):
         parameter_space: ConfigSpace.ConfigurationSpace,
         space_adapter: Optional[BaseSpaceAdapter] = None,
     ):
+=======
+    def __init__(self, *,
+                 parameter_space: ConfigSpace.ConfigurationSpace,
+                 optimization_targets: List[str],
+                 objective_weights: Optional[List[float]] = None,
+                 space_adapter: Optional[BaseSpaceAdapter] = None):
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """
         Create a new instance of the base optimizer.
 
@@ -38,6 +46,10 @@ class BaseOptimizer(metaclass=ABCMeta):
         ----------
         parameter_space : ConfigSpace.ConfigurationSpace
             The parameter space to optimize.
+        optimization_targets : List[str]
+            The names of the optimization targets to minimize.
+        objective_weights : Optional[List[float]]
+            Optional list of weights of optimization targets.
         space_adapter : BaseSpaceAdapter
             The space adapter class to employ for parameter space transformations.
         """
@@ -56,10 +68,19 @@ class BaseOptimizer(metaclass=ABCMeta):
                 "Given parameter space differs from the one given to space adapter"
             )
 
+        self._optimization_targets = optimization_targets
+        self._objective_weights = objective_weights
+        if objective_weights is not None and len(objective_weights) != len(optimization_targets):
+            raise ValueError("Number of weights must match the number of optimization targets")
+
         self._space_adapter: Optional[BaseSpaceAdapter] = space_adapter
+<<<<<<< HEAD
         self._observations: List[
             Tuple[pd.DataFrame, pd.Series, Optional[pd.DataFrame]]
         ] = []
+=======
+        self._observations: List[Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]] = []
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         self._has_context: Optional[bool] = None
         self._pending_observations: List[
             Tuple[pd.DataFrame, Optional[pd.DataFrame]]
@@ -76,31 +97,45 @@ class BaseOptimizer(metaclass=ABCMeta):
         """Get the space adapter instance (if any)."""
         return self._space_adapter
 
+<<<<<<< HEAD
     def register(
         self,
         configurations: pd.DataFrame,
         scores: pd.Series,
         context: Optional[pd.DataFrame] = None,
     ) -> None:
+=======
+    def register(self, configurations: pd.DataFrame, scores: pd.DataFrame,
+                 context: Optional[pd.DataFrame] = None) -> None:
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """Wrapper method, which employs the space adapter (if any), before registering the configurations and scores.
 
         Parameters
         ----------
         configurations : pd.DataFrame
             Dataframe of configurations / parameters. The columns are parameter names and the rows are the configurations.
-        scores : pd.Series
+        scores : pd.DataFrame
             Scores from running the configurations. The index is the same as the index of the configurations.
 
         context : pd.DataFrame
             Not Yet Implemented.
         """
         # Do some input validation.
+<<<<<<< HEAD
         assert self._has_context is None or self._has_context ^ (
             context is None
         ), "Context must always be added or never be added."
         assert len(configurations) == len(
             scores
         ), "Mismatched number of configurations and scores."
+=======
+        assert set(scores.columns) == set(self._optimization_targets), \
+            "Mismatched optimization targets."
+        assert self._has_context is None or self._has_context ^ (context is None), \
+            "Context must always be added or never be added."
+        assert len(configurations) == len(scores), \
+            "Mismatched number of configurations and scores."
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         if context is not None:
             assert len(configurations) == len(
                 context
@@ -120,19 +155,24 @@ class BaseOptimizer(metaclass=ABCMeta):
         return self._register(configurations, scores, context)
 
     @abstractmethod
+<<<<<<< HEAD
     def _register(
         self,
         configurations: pd.DataFrame,
         scores: pd.Series,
         context: Optional[pd.DataFrame] = None,
     ) -> None:
+=======
+    def _register(self, configurations: pd.DataFrame, scores: pd.DataFrame,
+                  context: Optional[pd.DataFrame] = None) -> None:
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """Registers the given configurations and scores.
 
         Parameters
         ----------
         configurations : pd.DataFrame
             Dataframe of configurations / parameters. The columns are parameter names and the rows are the configurations.
-        scores : pd.Series
+        scores : pd.DataFrame
             Scores from running the configurations. The index is the same as the index of the configurations.
 
         context : pd.DataFrame
@@ -223,16 +263,18 @@ class BaseOptimizer(metaclass=ABCMeta):
         """
         pass  # pylint: disable=unnecessary-pass # pragma: no cover
 
-    def get_observations(self) -> pd.DataFrame:
-        """Returns the observations as a dataframe.
+    def get_observations(self) -> Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]:
+        """
+        Returns the observations as a triplet of DataFrames (config, score, context).
 
         Returns
         -------
-        observations : pd.DataFrame
-            Dataframe of observations. The columns are parameter names and "score" for the score, each row is an observation.
+        observations : Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]
+            A triplet of (config, score, context) DataFrames of observations.
         """
         if len(self._observations) == 0:
             raise ValueError("No observations registered yet.")
+<<<<<<< HEAD
         configs = pd.concat([config for config, _, _ in self._observations])
         scores = pd.concat([score for _, score, _ in self._observations])
         try:
@@ -248,19 +290,41 @@ class BaseOptimizer(metaclass=ABCMeta):
             # Not reachable for now
             raise NotImplementedError()
         return configs
+=======
+        configs = pd.concat([config for config, _, _ in self._observations]).reset_index(drop=True)
+        scores = pd.concat([score for _, score, _ in self._observations]).reset_index(drop=True)
+        contexts = pd.concat([pd.DataFrame() if context is None else context
+                              for _, _, context in self._observations]).reset_index(drop=True)
+        return (configs, scores, contexts if len(contexts.columns) > 0 else None)
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 
-    def get_best_observation(self) -> pd.DataFrame:
-        """Returns the best observation so far as a dataframe.
+    def get_best_observations(self, n_max: int = 1) -> Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]:
+        """
+        Get the N best observations so far as a triplet of DataFrames (config, score, context).
+        Default is N=1. The columns are ordered in ASCENDING order of the optimization targets.
+        The function uses `pandas.DataFrame.nsmallest(..., keep="first")` method under the hood.
+
+        Parameters
+        ----------
+        n_max : int
+            Maximum number of best observations to return. Default is 1.
 
         Returns
         -------
-        best_observation : pd.DataFrame
-            Dataframe with a single row containing the best observation. The columns are parameter names and "score" for the score.
+        observations : Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]
+            A triplet of best (config, score, context) DataFrames of best observations.
         """
         if len(self._observations) == 0:
             raise ValueError("No observations registered yet.")
+<<<<<<< HEAD
         observations = self.get_observations()
         return observations.nsmallest(1, columns="score")
+=======
+        (configs, scores, contexts) = self.get_observations()
+        idx = scores.nsmallest(n_max, columns=self._optimization_targets, keep="first").index
+        return (configs.loc[idx], scores.loc[idx],
+                None if contexts is None else contexts.loc[idx])
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 
     def cleanup(self) -> None:
         """

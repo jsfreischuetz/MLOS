@@ -90,12 +90,20 @@ setup(
         "": ["py.typed", "**/*.pyi"],
     },
     install_requires=[
+<<<<<<< HEAD
         "scikit-learn>=1.2",
         "joblib>=1.1.1",  # CVE-2022-21797: scikit-learn dependency, addressed in 1.2.0dev0, which isn't currently released
         "scipy>=1.3.2",
         "numpy>=1.24",
         'pandas >= 2.2.0;python_version>="3.9"',
         'Bottleneck > 1.3.5;python_version>="3.9"',
+=======
+        'scikit-learn>=1.2',
+        'joblib>=1.1.1',        # CVE-2022-21797: scikit-learn dependency, addressed in 1.2.0dev0, which isn't currently released
+        'scipy>=1.3.2',
+        'numpy>=1.24', 'numpy<2.0.0',   # FIXME: https://github.com/numpy/numpy/issues/26710
+        'pandas >= 2.2.0;python_version>="3.9"', 'Bottleneck > 1.3.5;python_version>="3.9"',
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         'pandas >= 1.0.3;python_version<"3.9"',
         "ConfigSpace>=0.7.1",
     ],
