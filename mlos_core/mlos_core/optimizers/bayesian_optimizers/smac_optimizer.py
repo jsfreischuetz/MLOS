@@ -38,6 +38,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
     Wrapper class for SMAC based Bayesian optimization.
     """
 
+<<<<<<< HEAD
     def __init__(
         self,  # pylint: disable=too-many-locals
         *,  # pylint: disable=too-many-locals
@@ -56,6 +57,21 @@ class SmacOptimizer(BaseBayesianOptimizer):
         initial_design_class: Type[AbstractInitialDesign] = SobolInitialDesign,
         **kwargs: Any,
     ):
+=======
+    def __init__(self, *,  # pylint: disable=too-many-locals,too-many-arguments
+                 parameter_space: ConfigSpace.ConfigurationSpace,
+                 optimization_targets: List[str],
+                 objective_weights: Optional[List[float]] = None,
+                 space_adapter: Optional[BaseSpaceAdapter] = None,
+                 seed: Optional[int] = 0,
+                 run_name: Optional[str] = None,
+                 output_directory: Optional[str] = None,
+                 max_trials: int = 100,
+                 n_random_init: Optional[int] = None,
+                 max_ratio: Optional[float] = None,
+                 use_default_config: bool = False,
+                 n_random_probability: float = 0.1):
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """
         Instantiate a new SMAC optimizer wrapper.
 
@@ -63,6 +79,12 @@ class SmacOptimizer(BaseBayesianOptimizer):
         ----------
         parameter_space : ConfigSpace.ConfigurationSpace
             The parameter space to optimize.
+
+        optimization_targets : List[str]
+            The names of the optimization targets to minimize.
+
+        objective_weights : Optional[List[float]]
+            Optional list of weights of optimization targets.
 
         space_adapter : BaseSpaceAdapter
             The space adapter class to employ for parameter space
@@ -130,6 +152,8 @@ class SmacOptimizer(BaseBayesianOptimizer):
         """
         super().__init__(
             parameter_space=parameter_space,
+            optimization_targets=optimization_targets,
+            objective_weights=objective_weights,
             space_adapter=space_adapter,
         )
 
@@ -168,6 +192,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
 
         scenario: Scenario = Scenario(
             self.optimizer_parameter_space,
+            objectives=self._optimization_targets,
             name=run_name,
             output_directory=Path(output_directory),
             deterministic=True,
@@ -242,6 +267,8 @@ class SmacOptimizer(BaseBayesianOptimizer):
             intensifier=intensifier_instance,
             random_design=random_design,
             config_selector=config_selector,
+            multi_objective_algorithm=Optimizer_Smac.get_multi_objective_algorithm(
+                scenario, objective_weights=self._objective_weights),
             overwrite=True,
             logging_level=False,  # Use the existing logger
             **SmacOptimizer._filter_kwargs(facade, **kwargs),
@@ -327,12 +354,17 @@ class SmacOptimizer(BaseBayesianOptimizer):
         # -- this planned to be fixed in some future release: https://github.com/automl/SMAC3/issues/946
         raise RuntimeError("This function should never be called.")
 
+<<<<<<< HEAD
     def _register(
         self,
         configurations: pd.DataFrame,
         scores: pd.Series,
         context: Optional[pd.DataFrame] = None,
     ) -> None:
+=======
+    def _register(self, configurations: pd.DataFrame,
+                  scores: pd.DataFrame, context: Optional[pd.DataFrame] = None) -> None:
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """Registers the given configurations and scores.
 
         Parameters
@@ -340,7 +372,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
         configurations : pd.DataFrame
             Dataframe of configurations / parameters. The columns are parameter names and the rows are the configurations.
 
-        scores : pd.Series
+        scores : pd.DataFrame
             Scores from running the configurations. The index is the same as the index of the configurations.
 
         context : pd.DataFrame
@@ -371,6 +403,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
                         [df_ctx.equals(ctx) for df_ctx in self.trial_info_df["Context"]]
                     )
 
+<<<<<<< HEAD
                 # make a new entry
                 if sum(matching) > 0:
                     info = self.trial_info_df[matching]["TrialInfo"].iloc[-1]
@@ -402,6 +435,15 @@ class SmacOptimizer(BaseBayesianOptimizer):
                             value,
                         ]
                 self.base_optimizer.tell(info, value, save=False)
+=======
+        # Register each trial (one-by-one)
+        for (config, (_i, score)) in zip(self._to_configspace_configs(configurations), scores.iterrows()):
+            # Retrieve previously generated TrialInfo (returned by .ask()) or create new TrialInfo instance
+            info: TrialInfo = self.trial_info_map.get(
+                config, TrialInfo(config=config, seed=self.base_optimizer.scenario.seed))
+            value = TrialValue(cost=list(score.astype(float)), time=0.0, status=StatusType.SUCCESS)
+            self.base_optimizer.tell(info, value, save=False)
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 
             # Save optimizer once we register all configs
             self.base_optimizer.optimizer.save()
@@ -426,12 +468,17 @@ class SmacOptimizer(BaseBayesianOptimizer):
             Pandas dataframe with a single row containing the context.
             Column names are the budget, seed, and instance of the evaluation, if valid.
         """
+<<<<<<< HEAD
         with self.lock:
             if context is not None:
                 warn(
                     f"Not Implemented: Ignoring context {list(context.columns)}",
                     UserWarning,
                 )
+=======
+        if TYPE_CHECKING:
+            from smac.runhistory import TrialInfo  # pylint: disable=import-outside-toplevel,unused-import
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 
             trial: TrialInfo = self.base_optimizer.ask()
             trial.config.is_valid_configuration()
@@ -466,7 +513,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
                 UserWarning,
             )
         if self._space_adapter and not isinstance(self._space_adapter, IdentityAdapter):
-            raise NotImplementedError()
+            raise NotImplementedError("Space adapter not supported for surrogate_predict.")
 
         # pylint: disable=protected-access
         if len(self._observations) <= self.base_optimizer._initial_design._n_configs:

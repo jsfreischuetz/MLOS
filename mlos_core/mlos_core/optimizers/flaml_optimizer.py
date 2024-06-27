@@ -6,7 +6,11 @@
 Contains the FlamlOptimizer class.
 """
 
+<<<<<<< HEAD
 from typing import Dict, NamedTuple, Optional, Tuple, Union
+=======
+from typing import Dict, List, NamedTuple, Optional, Union
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 from warnings import warn
 
 import ConfigSpace
@@ -29,6 +33,7 @@ class FlamlOptimizer(BaseOptimizer):
     Wrapper class for FLAML Optimizer: A fast library for AutoML and tuning.
     """
 
+<<<<<<< HEAD
     def __init__(
         self,
         *,
@@ -37,13 +42,31 @@ class FlamlOptimizer(BaseOptimizer):
         low_cost_partial_config: Optional[dict] = None,
         seed: Optional[int] = None,
     ):
+=======
+    # The name of an internal objective attribute that is calculated as a weighted average of the user provided objective metrics.
+    _METRIC_NAME = "FLAML_score"
+
+    def __init__(self, *,   # pylint: disable=too-many-arguments
+                 parameter_space: ConfigSpace.ConfigurationSpace,
+                 optimization_targets: List[str],
+                 objective_weights: Optional[List[float]] = None,
+                 space_adapter: Optional[BaseSpaceAdapter] = None,
+                 low_cost_partial_config: Optional[dict] = None,
+                 seed: Optional[int] = None):
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """
-        Create an MLOS wrapper class for FLAML.
+        Create an MLOS wrapper for FLAML.
 
         Parameters
         ----------
         parameter_space : ConfigSpace.ConfigurationSpace
             The parameter space to optimize.
+
+        optimization_targets : List[str]
+            The names of the optimization targets to minimize.
+
+        objective_weights : Optional[List[float]]
+            Optional list of weights of optimization targets.
 
         space_adapter : BaseSpaceAdapter
             The space adapter class to employ for parameter space transformations.
@@ -57,6 +80,8 @@ class FlamlOptimizer(BaseOptimizer):
         """
         super().__init__(
             parameter_space=parameter_space,
+            optimization_targets=optimization_targets,
+            objective_weights=objective_weights,
             space_adapter=space_adapter,
         )
 
@@ -79,12 +104,17 @@ class FlamlOptimizer(BaseOptimizer):
         self.evaluated_samples: Dict[ConfigSpace.Configuration, EvaluatedSample] = {}
         self._suggested_config: Optional[dict]
 
+<<<<<<< HEAD
     def _register(
         self,
         configurations: pd.DataFrame,
         scores: pd.Series,
         context: Optional[pd.DataFrame] = None,
     ) -> None:
+=======
+    def _register(self, configurations: pd.DataFrame, scores: pd.DataFrame,
+                  context: Optional[pd.DataFrame] = None) -> None:
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
         """Registers the given configurations and scores.
 
         Parameters
@@ -92,13 +122,14 @@ class FlamlOptimizer(BaseOptimizer):
         configurations : pd.DataFrame
             Dataframe of configurations / parameters. The columns are parameter names and the rows are the configurations.
 
-        scores : pd.Series
+        scores : pd.DataFrame
             Scores from running the configurations. The index is the same as the index of the configurations.
 
         context : None
             Not Yet Implemented.
         """
         if context is not None:
+<<<<<<< HEAD
             for (_, config), score in zip(
                 configurations.astype("O").iterrows(), scores
             ):
@@ -107,14 +138,24 @@ class FlamlOptimizer(BaseOptimizer):
                     UserWarning,
                 )
         for (_, config), score in zip(configurations.astype("O").iterrows(), scores):
+=======
+            warn(f"Not Implemented: Ignoring context {list(context.columns)}", UserWarning)
+        for (_, config), (_, score) in zip(configurations.astype('O').iterrows(), scores.iterrows()):
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
             cs_config: ConfigSpace.Configuration = ConfigSpace.Configuration(
                 self.optimizer_parameter_space, values=config.to_dict()
             )
             if cs_config in self.evaluated_samples:
                 warn(f"Configuration {config} was already registered", UserWarning)
+<<<<<<< HEAD
 
             self.evaluated_samples[cs_config] = EvaluatedSample(
                 config=config.to_dict(), score=score
+=======
+            self.evaluated_samples[cs_config] = EvaluatedSample(
+                config=config.to_dict(),
+                score=float(np.average(score.astype(float), weights=self._objective_weights)),
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
             )
 
     def _suggest(
@@ -162,11 +203,15 @@ class FlamlOptimizer(BaseOptimizer):
         Returns
         -------
         result: Union[dict, None]
-            Dictionary with a single key, `score`, if config already evaluated; `None` otherwise.
+            Dictionary with a single key, `FLAML_score`, if config already evaluated; `None` otherwise.
         """
         cs_config = normalize_config(self.optimizer_parameter_space, config)
         if cs_config in self.evaluated_samples:
+<<<<<<< HEAD
             return {"score": self.evaluated_samples[cs_config].score}
+=======
+            return {self._METRIC_NAME: self.evaluated_samples[cs_config].score}
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
 
         self._suggested_config = dict(cs_config)  # Cleaned-up version of the config
         return None  # Returning None stops the process
@@ -182,7 +227,8 @@ class FlamlOptimizer(BaseOptimizer):
         Returns
         -------
         result: dict
-            Dictionary with a single key, `score`, if config already evaluated; `None` otherwise.
+            A dictionary with a single key that is equal to the name of the optimization target,
+            if config already evaluated; `None` otherwise.
 
         Raises
         ------
@@ -205,8 +251,13 @@ class FlamlOptimizer(BaseOptimizer):
         tune.run(
             self._target_function,
             config=self.flaml_parameter_space,
+<<<<<<< HEAD
             mode="min",
             metric="score",
+=======
+            mode='min',
+            metric=self._METRIC_NAME,
+>>>>>>> c7a4823b22855ccc9b9083495b48e95a48b779ec
             points_to_evaluate=points_to_evaluate,
             evaluated_rewards=evaluated_rewards,
             num_samples=len(points_to_evaluate) + 1,
