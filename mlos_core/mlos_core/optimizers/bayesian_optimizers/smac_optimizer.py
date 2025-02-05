@@ -46,7 +46,7 @@ class SmacOptimizer(BaseBayesianOptimizer):
         space_adapter: Optional[BaseSpaceAdapter] = None,
         seed: Optional[int] = 0,
         run_name: Optional[str] = None,
-        output_directory: Optional[str] = None,
+        output_directon_random_initry: Optional[str] = None,
         max_trials: int = 100,
         n_random_init: Optional[int] = None,
         max_ratio: Optional[float] = None,

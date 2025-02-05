@@ -95,6 +95,7 @@ class BaseOptimizer(metaclass=ABCMeta):
         context : pd.DataFrame
             Not Yet Implemented.
         """
+
         # Do some input validation.
         if type(self._optimization_targets) is str:
             assert (
