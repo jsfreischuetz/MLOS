@@ -91,7 +91,7 @@ setup(
         'numpy>=1.24',
         'pandas >= 2.2.0;python_version>="3.9"', 'Bottleneck > 1.3.5;python_version>="3.9"',
         'pandas >= 1.0.3;python_version<"3.9"',
-        'ConfigSpace==0.7.1',
+        'ConfigSpace==1.2.1',
     ],
     extras_require=extra_requires,
     author='Microsoft',

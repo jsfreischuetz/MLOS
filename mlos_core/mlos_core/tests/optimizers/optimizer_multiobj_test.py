@@ -71,7 +71,7 @@ def test_multi_target_opt() -> None:
         test_configuration = CS.Configuration(
             optimizer.parameter_space, suggestion.astype('O').iloc[0].to_dict())
         # Raises an error if outside of configuration space
-        test_configuration.is_valid_configuration()
+        test_configuration.check_valid_configuration()
         # Test registering the suggested configuration with a score.
         observation = objective(suggestion)
         assert isinstance(observation, pd.DataFrame)

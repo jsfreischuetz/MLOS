@@ -100,7 +100,7 @@ def test_basic_interface_toy_problem(configuration_space: CS.ConfigurationSpace,
         # check that suggestion is in the space
         configuration = CS.Configuration(optimizer.parameter_space, suggestion.iloc[0].to_dict())
         # Raises an error if outside of configuration space
-        configuration.is_valid_configuration()
+        configuration.check_valid_configuration()
         observation = objective(suggestion['x'])
         assert isinstance(observation, pd.DataFrame)
         optimizer.register(suggestion, observation, context)
@@ -380,7 +380,7 @@ def test_mixed_numerics_type_input_space_types(optimizer_type: Optional[Optimize
         # Check that suggestion is in the space
         test_configuration = CS.Configuration(optimizer.parameter_space, suggestion.astype('O').iloc[0].to_dict())
         # Raises an error if outside of configuration space
-        test_configuration.is_valid_configuration()
+        test_configuration.check_valid_configuration()
         # Test registering the suggested configuration with a score.
         observation = objective(suggestion)
         assert isinstance(observation, pd.DataFrame)
